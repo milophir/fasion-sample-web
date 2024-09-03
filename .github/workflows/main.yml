@@ -1,9 +1,9 @@
-name: Deploy Website
+name: Build and Deploy Docker Application
 
 on:
   push:
     branches:
-      - main  # Trigger workflow on push to main branch
+      - main  # Trigger workflow on push to the main branch
 
 jobs:
   build-and-deploy:
@@ -13,34 +13,34 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
+    - name: Set up Docker
       uses: docker/setup-buildx-action@v2
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
-    - name: Build and push Docker images
+    - name: Build Docker image
       uses: docker/build-push-action@v4
       with:
         context: .
-        push: false
-        tags: your-dockerhub-username/fasion-sample-web:latest
+        push: false  # Build only, do not push
+        tags: local/fasion-sample-web:latest
 
     - name: Set up Docker Compose
-      uses: docker/compose-action@v2
-      with:
-        version: '2.17.0'
-
-    - name: Deploy using Docker Compose
       run: |
-        docker-compose pull
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    - name: Deploy Docker Compose
+      run: |
+        # Create a directory for Docker Compose files
+        mkdir -p $HOME/docker-compose-app
+        cp docker-compose.yml $HOME/docker-compose-app/
+        cd $HOME/docker-compose-app
+
+        # Build and start containers
+        docker-compose build
         docker-compose up -d
-      env:
-        DOCKER_HOST: tcp://your-server-ip:2376
-        DOCKER_TLS_VERIFY: 1
-        DOCKER_CERT_PATH: /root/.docker
+
+    - name: Verify Deployment
+      run: |
+        # Check running containers
+        docker ps
+        # Optionally, perform other checks or tests
