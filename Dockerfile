@@ -1,21 +1,17 @@
-# Use an appropriate base image
-FROM node:14
+# Use the official Nginx image from the Docker Hub
+FROM nginx:alpine
 
-# Set the working directory
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /usr/share/nginx/html
 
-# Install dependencies
-COPY package*.json ./
-RUN npm install
+# Remove the default Nginx index.html
+RUN rm -f index.html
 
-# Copy application code
+# Copy your static website files into the container
 COPY . .
 
-# Build the application (adjust according to your setup)
-RUN npm run build
-
-# Expose the port (adjust according to your app’s needs)
+# Expose port 80 to allow traffic to the Nginx server
 EXPOSE 80
 
-# Define the command to run the app
-CMD ["npm", "start"]
+# Define the default command to run Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
