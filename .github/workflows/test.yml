@@ -19,8 +19,8 @@ jobs:
     - name: Build Docker image
       uses: docker/build-push-action@v4
       with:
-        context: .  # Use the root directory as context
-        file: Dockerfile  # Dockerfile name
+        context: .  # Set the context to the root directory
+        file: Dockerfile  # Dockerfile location
         push: false  # Build only, do not push
         tags: local/my-html-website:latest
 
@@ -29,21 +29,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y docker-compose
 
-    - name: Prepare Docker Compose Directory
-      run: |
-        # Create directory for Docker Compose files
-        mkdir -p $HOME/docker-compose-app
-
-    - name: Copy Docker Compose file
-      run: |
-        # Copy the docker-compose.yml to the prepared directory
-        cp docker-compose.yml $HOME/docker-compose-app/
-
     - name: Deploy Docker Compose
       run: |
-        # Navigate to the Docker Compose directory
+        # Ensure docker-compose.yml is in the expected location
+        mkdir -p $HOME/docker-compose-app
+        cp docker-compose.yml $HOME/docker-compose-app/
         cd $HOME/docker-compose-app
-        # Build and start containers using Docker Compose
         docker-compose build || { echo 'Docker Compose build failed'; exit 1; }
         docker-compose up -d
 
