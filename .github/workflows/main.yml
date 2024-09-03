@@ -19,7 +19,7 @@ jobs:
     - name: Build Docker image
       uses: docker/build-push-action@v4
       with:
-        context: ./docker
+        context: ./
         push: false  # Build only, do not push
         tags: local/fasion-sample-web:latest
 
