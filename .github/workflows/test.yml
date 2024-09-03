@@ -13,14 +13,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: List files in root directory
+      run: ls -la  # List files to verify Dockerfile presence
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Build Docker image
       uses: docker/build-push-action@v4
       with:
-        context: .  # Set the context to the root directory
-        file: Dockerfile  # Dockerfile location
+        context: .  # Root directory
+        file: Dockerfile  # Dockerfile in the root directory
         push: false  # Build only, do not push
         tags: local/my-html-website:latest
 
