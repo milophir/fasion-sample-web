@@ -28,7 +28,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: .
-        push: true
+        push: false
         tags: your-dockerhub-username/fasion-sample-web:latest
 
     - name: Set up Docker Compose
