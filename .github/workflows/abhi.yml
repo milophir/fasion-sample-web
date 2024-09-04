@@ -3,7 +3,7 @@ name: Build and Deploy HTML Website
 on:
   push:
     branches:
-      - main
+      - main  # Trigger workflow on push to the main branch
 
 jobs:
   build-and-deploy:
@@ -13,18 +13,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: List files in root directory
-      run: ls -la
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Build Docker image
       uses: docker/build-push-action@v4
       with:
-        context: .
-        file: Dockerfile
-        push: false
+        context: .  # Use the root directory as context
+        file: Dockerfile  # Dockerfile name
+        push: false  # Build only, do not push
         tags: local/my-html-website:latest
 
     - name: Install Docker Compose
@@ -32,24 +29,24 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y docker-compose
 
-    - name: Set up SSH
-      run: |
-        # Create SSH key file
-        echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
-        chmod 600 private_key.pem
-        
-        # Create .ssh directory if it does not exist
-        mkdir -p ~/.ssh
-        
-        # Add EC2 host to known_hosts to avoid host key verification issues
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+    - name: Set up SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy to EC2
+    - name: Copy Docker Compose file
       run: |
-        ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} '
-          docker-compose pull &&
-          docker-compose up -d'
-    
+        scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/docker-compose-app/
+
+    - name: Deploy Docker Compose
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd /home/${{ secrets.SSH_USER }}/docker-compose-app
+          docker-compose build || { echo 'Docker Compose build failed'; exit 1; }
+          docker-compose up -d
+        EOF
+
     - name: Verify Deployment
       run: |
-        ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} 'docker ps'
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "docker ps"
+        # Optionally, perform other checks or tests
