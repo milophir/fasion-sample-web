@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy HTML Website to EC2
 
 on:
   push:
@@ -6,36 +6,22 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Docker image
-        run: docker build -t my-html-website .
-
-      - name: Upload Docker image as artifact
-        uses: actions/upload-artifact@v3
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.4
         with:
-          name: my-html-website
-          path: |
-            $(docker save my-html-website | gzip > image.tar.gz)
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Deploy to EC2
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "$EC2_SSH_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          scp -i private_key.pem image.tar.gz  ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/
-          ssh -i private_key.pem  secrets.SSH_HOST<< 'EOF'
-            docker load -i /home/ec2-user/image.tar.gz
-            docker stop my-html-container || true
-            docker rm my-html-container || true
-            docker run -d --name my-html-container -p 80:80 my-html-website
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/my-website || exit
+            git pull
+            sudo docker-compose up --build -d
           EOF
