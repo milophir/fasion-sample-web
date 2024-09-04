@@ -32,13 +32,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y docker-compose
 
+    - name: Set up SSH
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+        chmod 600 private_key.pem
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
     - name: Deploy to EC2
       run: |
-          ssh -i ${{ secrets.EC2_SSH_KEY }} ec2-user@${{ secrets.EC2_HOST }} \
-            'docker-compose pull && docker-compose up -d'
-      env:
-        SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-        
+        ssh -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} '
+          docker-compose pull &&
+          docker-compose up -d'
+    
     - name: Verify Deployment
       run: |
-        ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} 'docker ps'
+        ssh -i private_key.pem ec2-user@${{ secrets.EC2_HOST }} 'docker ps'
