@@ -32,8 +32,8 @@ jobs:
     - name: Deploy Docker Compose
       run: |
         # Ensure docker-compose.yml is in the expected location
-        cp docker-compose.yml $HOME/docker-compose-app/
-        cd $HOME/docker-compose-app
+       # cp docker-compose.yml $HOME/docker-compose-app/
+       #  cd $HOME/docker-compose-app
         docker-compose build || { echo 'Docker Compose build failed'; exit 1; }
         docker-compose up -d
 
