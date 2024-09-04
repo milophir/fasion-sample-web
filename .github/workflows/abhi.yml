@@ -13,36 +13,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
     - name: Build Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .  # Use the root directory as context
-        file: Dockerfile  # Dockerfile name
-        push: false  # Build only, do not push
-        tags: local/my-html-website:latest
-
-    - name: Install Docker Compose
       run: |
-        sudo apt-get update
-        sudo apt-get install -y docker-compose
+        docker build -t my-html-website:latest .
+
+    - name: Save Docker image to file
+      run: |
+        docker save my-html-website:latest | gzip > my-html-website.tar.gz
 
     - name: Set up SSH key
       uses: webfactory/ssh-agent@v0.7.0
       with:
-        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy Docker Compose
+    - name: Copy Docker image to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          cd /home/${{ secrets.SSH_USER }}/docker-compose-app
-          docker-compose build || { echo 'Docker Compose build failed'; exit 1; }
-          docker-compose up -d
+        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa my-html-website.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/
+
+    - name: Deploy to AWS EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd /home/${{ secrets.SSH_USER }}
+          gunzip my-html-website.tar.gz
+          docker load -i my-html-website.tar
+          docker run -d -p 80:80 my-html-website:latest
         EOF
-
-    - name: Verify Deployment
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "docker ps"
-        # Optionally, perform other checks or tests
