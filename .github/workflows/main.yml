@@ -31,9 +31,9 @@ jobs:
     - name: Deploy Docker Compose
       run: |
         # Create a directory for Docker Compose files
-        mkdir -p $HOME/docker-compose-app
-        cp docker-compose.yml $HOME/docker-compose-app/
-        cd $HOME/docker-compose-app
+       # mkdir -p $HOME/docker-compose-app
+        #cp docker-compose.yml $HOME/docker-compose-app/
+        # cd $HOME/docker-compose-app
 
         # Build and start containers
         docker-compose build
