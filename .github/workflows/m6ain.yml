@@ -33,7 +33,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           scp -i private_key.pem image.tar.gz  ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/
-          ssh -i private_key.pem ec2-user@your-ec2-public-dns << 'EOF'
+          ssh -i private_key.pem  secrets.SSH_HOST<< 'EOF'
             docker load -i /home/ec2-user/image.tar.gz
             docker stop my-html-container || true
             docker rm my-html-container || true
