@@ -33,7 +33,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             # Install Docker if not installed
             if ! command -v docker &> /dev/null
@@ -44,5 +44,5 @@ jobs:
             fi
 
             # Load Docker image and run container
-            docker load -i /home/ec2-user/your-image.tar.gz
+            docker load -i /home/ubuntu/your-image.tar.gz
             docker run -d -p 80:80 your-image:latest
